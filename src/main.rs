@@ -1,5 +1,4 @@
 use clap::{arg, command,Parser, Subcommand};
-use std::fs;
 use std::path::Path;
 
 mod core;
@@ -9,11 +8,11 @@ struct Cli {
     #[command(subcommand)]
     commands: Commands,
 
-    #[arg(short,long)]
-    tests_dir_path: String,
+    #[arg(short,long,required=false,default_value="tests_dir")]
+    storage_dir_path: String,
 
-    #[arg(short,long)]
-    test_template_path: String,
+    #[arg(short,long,required=false,default_value="./.dummy")]
+    template_path: String,
 }
 
 #[derive(Debug,Subcommand)]
@@ -35,6 +34,11 @@ enum Commands {
         #[command(subcommand)]
         commands: RunTestsCommands
     },
+    #[command(about = "Setup the Env")]
+    SetEnv{
+        #[arg(value_name = "ENV_STATUS")]
+        status: String
+    }
 }
 
 #[derive(Debug,Subcommand)]
@@ -56,24 +60,9 @@ enum RunTestsCommands{
 
 fn main() {
     let cli = Cli::parse();
-
-    let tests_path =
-    {
-        Path::new(match cli.tests_dir_path.as_str(){
-            "" => "tests_dir",
-            str => str,
-        })
-    };
-
-    let test_template_path =
-    {
-        Path::new(match cli.tests_dir_path.as_str(){
-            "" => "./.dummy",
-            str => str,
-        })
-    };
-
-    let rcv = core::RCV::new(tests_path, test_template_path)
+    let tests_path = Path::new(cli.storage_dir_path.as_str());
+    let template_path = Path::new(cli.storage_dir_path.as_str());
+    let rcv = core::RCV::new(tests_path, template_path)
         .unwrap_or_else(|err|{
             println!("{}",err);
             std::process::exit(1);
@@ -82,8 +71,21 @@ fn main() {
 
     match cli.commands {
         Commands::List => rcv.list_tests(),
-        Commands::Add { name } => rcv.add_test(name.as_str()),
-        Commands::Delete { name } => rcv.rem_test(name.as_str()),
+        Commands::Add { name } => {
+            let err = rcv.add_test(name.as_str());
+            match err {
+                Ok(_) => (),
+                Err(_) => println!("add test failed"),
+            }
+        },
+        Commands::Delete { name } => {
+            let err = rcv.rem_test(name.as_str());
+            match err {
+                Ok(_) => (),
+                Err(_) => println!("rm test failed"),
+            }
+        },
+        Commands::SetEnv{ status } => (),
         Commands::RunTests { commands } => {
             match commands{
                 RunTestsCommands::All => rcv.run_tests(None, None),

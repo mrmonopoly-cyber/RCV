@@ -72,10 +72,10 @@ impl<'a> RCV<'a> {
         copy_dir(self.test_directory_path, dest)
     }
 
-    pub fn rem_test(&self, name: &'a str) {
+    pub fn rem_test(&self, name: &'a str) -> io::Result<()>{
         let test_path = self.test_directory_path.join(name);
         println!("removing test path: {}", test_path.display());
-        std::fs::remove_dir_all(test_path);
+        std::fs::remove_dir_all(test_path)
     }
 
     pub fn run_tests(&self, test_list: Option<&'a Vec<String>>, skip_list: Option<&'a Vec<String>> ) {

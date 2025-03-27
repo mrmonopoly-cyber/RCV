@@ -1,4 +1,4 @@
-use clap::{arg, command,Parser, Subcommand};
+use clap::{arg, command, ArgAction, Parser, Subcommand};
 use std::path::Path;
 
 mod core;
@@ -8,11 +8,14 @@ struct Cli {
     #[command(subcommand)]
     commands: Commands,
 
-    #[arg(short,long,required=false,default_value="tests_dir")]
+    #[arg(long,required=false,default_value="tests_dir")]
     storage_dir_path: String,
 
-    #[arg(short,long,required=false,default_value="./.dummy")]
+    #[arg(long,required=false,default_value="./.dummy")]
     template_path: String,
+
+    #[arg(long,required=false,default_value="./Makefile")]
+    env_makefile_path: String,
 }
 
 #[derive(Debug,Subcommand)]
@@ -36,8 +39,8 @@ enum Commands {
     },
     #[command(about = "Setup the Env")]
     SetEnv{
-        #[arg(value_name = "ENV_STATUS")]
-        status: String
+        #[arg(long,required=false,action=ArgAction::SetTrue)]
+        status: bool
     }
 }
 
@@ -62,7 +65,8 @@ fn main() {
     let cli = Cli::parse();
     let tests_path = Path::new(cli.storage_dir_path.as_str());
     let template_path = Path::new(cli.storage_dir_path.as_str());
-    let rcv = core::RCV::new(tests_path, template_path)
+    let setup_makefile_path = Path::new(cli.env_makefile_path.as_str());
+    let rcv = core::RCV::new(tests_path, template_path,setup_makefile_path)
         .unwrap_or_else(|err|{
             println!("{}",err);
             std::process::exit(1);
@@ -85,7 +89,7 @@ fn main() {
                 Err(_) => println!("rm test failed"),
             }
         },
-        Commands::SetEnv{ status } => (),
+        Commands::SetEnv{ status } => rcv.setup_env(status),
         Commands::RunTests { commands } => {
             match commands{
                 RunTestsCommands::All => rcv.run_tests(None, None),

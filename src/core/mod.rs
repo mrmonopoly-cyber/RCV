@@ -6,10 +6,15 @@ use std::io;
 pub struct RCV<'a> {
     tests_template_path: &'a Path,
     test_directory_path: &'a Path,
+    makefile_path: &'a Path,
 }
 
 impl<'a> RCV<'a> {
-    pub fn new(test_directory_path: &'a Path, tests_template_path: &'a Path) -> Result<Self,&'a str>
+    pub fn new(
+        test_directory_path: &'a Path,
+        tests_template_path: &'a Path,
+        makefile_path: &'a Path,
+        ) -> Result<Self,&'a str>
     {
         if !test_directory_path.exists(){
             fs::DirBuilder::new().create(test_directory_path).expect("failed creting a new test directory")
@@ -21,9 +26,14 @@ impl<'a> RCV<'a> {
             return Err("Invalid test template path");
         }
 
+        if !makefile_path.exists(){
+            return  Err("invalid makefile_path");
+        }
+
         Ok(Self{
             tests_template_path,
             test_directory_path,
+            makefile_path,
         })
     }
     
@@ -76,6 +86,10 @@ impl<'a> RCV<'a> {
         let test_path = self.test_directory_path.join(name);
         println!("removing test path: {}", test_path.display());
         std::fs::remove_dir_all(test_path)
+    }
+
+    pub fn setup_env(&self, activate: bool)
+    {
     }
 
     pub fn run_tests(&self, test_list: Option<&'a Vec<String>>, skip_list: Option<&'a Vec<String>> ) {

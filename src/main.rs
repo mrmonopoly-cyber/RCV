@@ -81,18 +81,14 @@ fn main() {
     match cli.commands {
         Commands::List => rcv.list_tests(),
         Commands::Add { name } => {
-            let err = rcv.add_test(name.as_str());
-            match err {
-                Ok(_) => (),
-                Err(_) => println!("add test failed"),
-            }
+            rcv.add_test(name.as_str())
+                .is_err()
+                .then(|| println!("add test failed"));
         },
         Commands::Delete { name } => {
-            let err = rcv.rem_test(name.as_str());
-            match err {
-                Ok(_) => (),
-                Err(_) => println!("rm test failed"),
-            }
+            rcv.rem_test(name.as_str())
+                .is_err()
+                .then(|| println!("rm test failed"));
         },
         Commands::SetEnv{ status } =>
         {

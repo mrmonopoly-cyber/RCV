@@ -1,4 +1,4 @@
-use clap::{arg, command, ArgAction, Parser, Subcommand};
+use clap::{arg, command, ValueEnum, Parser, Subcommand};
 use std::path::Path;
 
 mod core;
@@ -37,11 +37,16 @@ enum Commands {
         #[command(subcommand)]
         commands: RunTestsCommands
     },
-    #[command(about = "Setup the Env")]
+    #[command(about = "Setup the test environment")]
     SetEnv{
-        #[arg(long,required=false,action=ArgAction::SetTrue)]
-        status: bool
+        status: EnvStatus
     }
+}
+
+#[derive(ValueEnum,Clone,Debug)]
+enum EnvStatus{
+    Init,
+    Close,
 }
 
 #[derive(Debug,Subcommand)]
@@ -89,7 +94,13 @@ fn main() {
                 Err(_) => println!("rm test failed"),
             }
         },
-        Commands::SetEnv{ status } => rcv.setup_env(status),
+        Commands::SetEnv{ status } =>
+        {
+            match status{
+                EnvStatus::Init => rcv.setup_env(true),
+                EnvStatus::Close => rcv.setup_env(false),
+            }
+        }
         Commands::RunTests { commands } => {
             match commands{
                 RunTestsCommands::All => rcv.run_tests(None, None),
